@@ -23,17 +23,14 @@ footer{border-top:1px solid var(--line);padding:30px 0;color:#6f8e84;text-align:
 <style>
 .district:focus{outline:2px solid var(--green);outline-offset:2px}
 .quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}.quick span{padding:7px 10px;background:#09221b;border:1px solid var(--line);border-radius:20px;color:#bcd5cd;font-size:12px}
-
-.bd-map-wrap{background:#09221b;border:1px solid var(--line);border-radius:18px;padding:16px;margin:20px 0}
-.bd-map-title{font-weight:800;margin-bottom:12px}.bd-map{position:relative;height:520px;overflow:hidden;border-radius:14px;background:radial-gradient(circle at 50% 45%,#0e382b,#061713 70%)}
-.map-land{position:absolute;inset:7% 19% 7% 19%;background:linear-gradient(135deg,#123e30,#0b2b22);clip-path:polygon(36% 0,58% 4%,72% 14%,88% 24%,82% 38%,96% 52%,83% 66%,88% 82%,70% 91%,55% 100%,39% 91%,26% 94%,15% 81%,21% 67%,7% 54%,15% 40%,5% 27%,20% 18%,22% 7%);border:1px solid #2a6853;box-shadow:0 0 45px #0b392a}
-.map-dot{position:absolute;transform:translate(-50%,-50%);border:2px solid #eafff7;width:14px;height:14px;border-radius:50%;cursor:pointer;background:#19a875;box-shadow:0 0 0 3px #06201799;z-index:2}
-.map-dot:hover{width:18px;height:18px;box-shadow:0 0 0 5px #35dc9655}.map-dot.visited{background:#35dc96}.map-dot.plan{background:#f5c451}.map-label{position:absolute;transform:translate(-50%,8px);font-size:9px;color:#cce5dd;white-space:nowrap;pointer-events:none;z-index:3;text-shadow:0 1px 3px #000}
-.map-legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;color:#91aea5;font-size:12px}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}.dot.normal{background:#19a875}.dot.visited{background:#35dc96}.dot.plan{background:#f5c451}
-@media(max-width:700px){.bd-map{height:430px}.map-label{font-size:7px}.map-dot{width:11px;height:11px}}
 </style>
 </style>
-</head>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+#bdmap{height:520px;border-radius:18px;border:1px solid var(--line);overflow:hidden;margin:20px 0}
+.leaflet-container{background:#071b16}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#0b241d;color:#effff8}
+.leaflet-popup-content{font-family:system-ui,sans-serif}.mapbtn{background:#35dc96;color:#042017;border:0;border-radius:8px;padding:8px 12px;font-weight:800}
+</style></head>
 <body>
 <header><div class="logo">Explore <span>Bangladesh</span> 🇧🇩</div><nav><a href="#districts">Districts</a><a href="#discover">Discover</a><a href="#planner">Planner</a><a href="#journey">My Journey</a></nav></header>
 
@@ -52,19 +49,7 @@ footer{border-top:1px solid var(--line);padding:30px 0;color:#6f8e84;text-align:
 
 <section id="districts">
 <h2>Explore 64 Districts</h2><p class="sub">একটা জেলায় ক্লিক করে details দেখুন। আবার ক্লিক করলে visited হিসেবে mark হবে।</p>
-
-<div class="bd-map-wrap">
-  <div class="bd-map-title">🇧🇩 Bangladesh District Map</div>
-  <div class="bd-map" id="bdmap">
-    <div class="map-land"></div>
-  </div>
-  <div class="map-legend">
-    <span><i class="dot normal"></i> Not visited</span>
-    <span><i class="dot visited"></i> Visited</span>
-    <span><i class="dot plan"></i> Planned</span>
-  </div>
-</div>
-<p class="sub">জেলার marker-এ চাপলেই district details খুলবে।</p><div class="toolbar"><button class="filter active" data-filter="all">সব</button>
+<div id="bdmap"></div><p class="sub">Map-এর district marker-এ চাপলে district details খুলবে।</p><div class="toolbar"><button class="filter active" data-filter="all">সব</button>
 <button class="filter" data-filter="division-Barishal">বরিশাল</button><button class="filter" data-filter="division-Chattogram">চট্টগ্রাম</button><button class="filter" data-filter="division-Dhaka">ঢাকা</button><button class="filter" data-filter="division-Khulna">খুলনা</button><button class="filter" data-filter="division-Rajshahi">রাজশাহী</button><button class="filter" data-filter="division-Rangpur">রংপুর</button><button class="filter" data-filter="division-Sylhet">সিলেট</button><button class="filter" data-filter="division-Mymensingh">ময়মনসিংহ</button><button class="filter" data-filter="visited">Visited</button><button class="filter" data-filter="plan">Plan</button><button class="filter" data-filter="new">Not visited</button></div>
 <div class="map" id="map"></div>
 </section>
@@ -100,38 +85,34 @@ footer{border-top:1px solid var(--line);padding:30px 0;color:#6f8e84;text-align:
 <br><br><span style="color:#bcd5cd">📍 Tourist spots · 💎 Hidden gems · 🧭 Route · 💰 Budget · 🍲 Local food · 🌤️ Best time · 🥾 Adventure</span></p><button class="btn" onclick="markVisitedFromModal()">Mark as Visited</button> <button class="btn alt" onclick="markPlanFromModal()">Add to Plan</button></div></div>
 
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-
-const mapCoords={
-"Bagerhat":[68,67],"Bandarban":[75,74],"Barguna":[42,80],"Barishal":[48,73],"Bhola":[55,72],
-"Bogura":[45,38],"Brahmanbaria":[69,39],"Chandpur":[61,53],"Chattogram":[77,53],"Chuadanga":[22,57],
-"Cox's Bazar":[76,72],"Cumilla":[67,48],"Dhaka":[54,49],"Dinajpur":[34,23],"Faridpur":[43,60],
-"Feni":[71,59],"Gaibandha":[43,28],"Gazipur":[56,42],"Gopalganj":[42,68],"Habiganj":[72,32],
-"Jamalpur":[48,27],"Jashore":[30,66],"Jhalokathi":[48,80],"Jhenaidah":[29,60],"Joypurhat":[38,35],
-"Khagrachhari":[79,43],"Khulna":[28,76],"Kishoreganj":[61,34],"Kurigram":[51,19],"Kushtia":[31,52],
-"Lakshmipur":[63,66],"Lalmonirhat":[48,18],"Madaripur":[47,66],"Magura":[34,63],"Manikganj":[46,50],
-"Maulvibazar":[77,24],"Meherpur":[23,55],"Munshiganj":[54,57],"Mymensingh":[55,29],"Naogaon":[34,43],
-"Narail":[33,72],"Narayanganj":[59,54],"Narsingdi":[63,45],"Natore":[39,48],"Chapai Nawabganj":[25,42],
-"Netrokona":[61,22],"Nilphamari":[42,17],"Noakhali":[64,73],"Pabna":[39,57],"Panchagarh":[38,10],
-"Patuakhali":[48,88],"Pirojpur":[43,83],"Rajbari":[39,63],"Rajshahi":[29,43],"Rangamati":[78,57],
-"Rangpur":[45,23],"Satkhira":[22,79],"Shariatpur":[52,67],"Sherpur":[53,22],"Sirajganj":[45,48],
-"Sunamganj":[67,20],"Sylhet":[77,16],"Tangail":[49,43],"Thakurgaon":[32,14]
-};
-function renderBDMap(){
- const el=document.getElementById("bdmap"); if(!el)return;
- el.querySelectorAll(".map-dot,.map-label").forEach(x=>x.remove());
- Object.keys(mapCoords).forEach(name=>{
-  const [x,y]=mapCoords[name];
-  const d=document.createElement("button"); d.className="map-dot"+(state.visited.includes(name)?" visited":state.plan.includes(name)?" plan":"");
-  d.style.left=x+"%";d.style.top=y+"%";d.title=name;d.setAttribute("aria-label",name);d.onclick=()=>openDistrict(name);el.appendChild(d);
-  const l=document.createElement("span");l.className="map-label";l.style.left=x+"%";l.style.top=y+"%";l.textContent=name;el.appendChild(l);
+const bdMap=L.map('bdmap',{scrollWheelZoom:false}).setView([23.685,90.3563],7);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(bdMap);
+let districtMarkers=[];
+const nameMap={"Chattagram":"Chattogram","Comilla":"Cumilla","Jessore":"Jashore","Bogra":"Bogura","Barisal":"Barishal","Moulvibazar":"Maulvibazar","Nawabganj":"Chapai Nawabganj"};
+function norm(n){return nameMap[n]||n}
+function markerColor(d){return window.state&&state.visited.includes(d)?"#35dc96":window.state&&state.plan.includes(d)?"#f5c451":"#19a875"}
+function drawDistrictMarkers(data){
+ districtMarkers.forEach(m=>bdMap.removeLayer(m)); districtMarkers=[];
+ const all=[];(data||[]).forEach(div=>(div.districts||[]).forEach(d=>all.push(d)));
+ all.forEach(d=>{
+  const name=norm(d.name||d.en_name||""); const lat=parseFloat(d.lat),lon=parseFloat(d.long||d.lon);
+  if(!name||!isFinite(lat)||!isFinite(lon))return;
+  const m=L.circleMarker([lat,lon],{radius:7,weight:2,color:"#effff8",fillColor:markerColor(name),fillOpacity:.95});
+  m.bindPopup("<b>"+name+"</b><br><span style='color:#91aea5'>Explore this district</span><br><br><button class='mapbtn' onclick=\"openDistrict('"+name.replace(/'/g,"\\'")+"')\">Open District</button>");
+  m.addTo(bdMap);districtMarkers.push(m);
  });
 }
+window.drawDistrictMarkers=drawDistrictMarkers;
+window._bdGeoPromise=fetch("https://iqbalhasandev.github.io/bangladesh-geo-json/bangladesh-geo.json").then(r=>r.json()).catch(()=>null);
+</script>
+<script>
 const districts=["Bagerhat", "Bandarban", "Barguna", "Barishal", "Bhola", "Bogura", "Brahmanbaria", "Chandpur", "Chattogram", "Chuadanga", "Cox"s Bazar", "Cumilla", "Dhaka", "Dinajpur", "Faridpur", "Feni", "Gaibandha", "Gazipur", "Gopalganj", "Habiganj", "Jamalpur", "Jashore", "Jhalokathi", "Jhenaidah", "Joypurhat", "Khagrachhari", "Khulna", "Kishoreganj", "Kurigram", "Kushtia", "Lakshmipur", "Lalmonirhat", "Madaripur", "Magura", "Manikganj", "Maulvibazar", "Meherpur", "Munshiganj", "Mymensingh", "Naogaon", "Narail", "Narayanganj", "Narsingdi", "Natore", "Chapai Nawabganj", "Netrokona", "Nilphamari", "Noakhali", "Pabna", "Panchagarh", "Patuakhali", "Pirojpur", "Rajbari", "Rajshahi", "Rangamati", "Rangpur", "Satkhira", "Shariatpur", "Sherpur", "Sirajganj", "Sunamganj", "Sylhet", "Tangail", "Thakurgaon"]
 const divisions={"Barishal":["Barguna","Barishal","Bhola","Jhalokathi","Patuakhali","Pirojpur"],"Chattogram":["Bandarban","Brahmanbaria","Chandpur","Chattogram","Cumilla","Cox's Bazar","Feni","Khagrachhari","Lakshmipur","Noakhali","Rangamati"],"Dhaka":["Dhaka","Faridpur","Gazipur","Gopalganj","Kishoreganj","Madaripur","Manikganj","Munshiganj","Narayanganj","Narsingdi","Rajbari","Shariatpur","Tangail"],"Khulna":["Bagerhat","Chuadanga","Jashore","Jhenaidah","Khulna","Kushtia","Magura","Meherpur","Narail","Satkhira"],"Rajshahi":["Bogura","Chapai Nawabganj","Joypurhat","Naogaon","Natore","Pabna","Rajshahi","Sirajganj"],"Rangpur":["Dinajpur","Gaibandha","Kurigram","Lalmonirhat","Nilphamari","Panchagarh","Rangpur","Thakurgaon"],"Sylhet":["Habiganj","Maulvibazar","Sunamganj","Sylhet"],"Mymensingh":["Jamalpur","Mymensingh","Netrokona","Sherpur"]};
-let state=JSON.parse(localStorage.getItem("eb_state")||'{"visited":[],"plan":[]}'); window.state=state; window.state=state;let current="";
+let state=JSON.parse(localStorage.getItem("eb_state")||'{"visited":[],"plan":[]}'); window.state=state;let current="";
 const map=document.getElementById("map");
-function save(){localStorage.setItem("eb_state",JSON.stringify(state));updateStats();render();renderBDMap()}
+function save(){localStorage.setItem("eb_state",JSON.stringify(state));updateStats();refreshMap()}
 async function refreshMap(){if(window._bdGeoPromise){let data=await window._bdGeoPromise;if(data)drawDistrictMarkers(data)}}
 function updateStats(){let n=state.visited.length;document.getElementById("visitedCount").textContent=n+"/64";document.getElementById("percent").textContent=Math.round(n/64*100)+"%";document.getElementById("journeyText").textContent=n+" / 64 districts";document.getElementById("progress").style.width=(n/64*100)+"%";document.getElementById("level").textContent=n>=64?"All 64 Districts Completed 🇧🇩":"My Bangladesh"}
 function render(filter="all"){map.innerHTML="";districts.forEach(d=>{let v=state.visited.includes(d),p=state.plan.includes(d);let divMatch=!filter.startsWith("division-")||((divisions[filter.slice(9)]||[]).includes(d));if(!divMatch||filter==="visited"&&!v||filter==="plan"&&!p||filter==="new"&&(v||p))return;let b=document.createElement("button");b.className="district"+(v?" visited":"")+(p&&!v?" plan":"");b.textContent=d;b.onclick=()=>openDistrict(d);map.appendChild(b)})}
@@ -145,7 +126,7 @@ function markPlanFromModal(){if(!state.plan.includes(current)&&!state.visited.in
 function searchDistrict(){let q=document.getElementById("search").value.toLowerCase().trim();let b=[...document.querySelectorAll(".district")];b.forEach(x=>x.style.outline=q&&x.textContent.toLowerCase().includes(q)?"2px solid var(--green)":"none");let hit=districts.find(x=>x.toLowerCase()===q);if(hit)openDistrict(hit)}
 document.querySelectorAll(".filter").forEach(f=>f.onclick=()=>{document.querySelectorAll(".filter").forEach(x=>x.classList.remove("active"));f.classList.add("active");render(f.dataset.filter)});
 function makePlan(){let s=document.getElementById("start").value||"আপনার starting point",d=document.getElementById("dest").value||"পছন্দের destination",days=document.getElementById("days").value,b=document.getElementById("budget").value||"নির্ধারিত নয়";let r=document.getElementById("planResult");r.style.display="block";r.innerHTML=`<strong>${d} trip ready ✨</strong><br><br>📍 ${s} → ${d}<br>🗓️ ${days}<br>💰 Budget: ৳${b}<br><br><span style="color:var(--muted)">পরের version-এ real transport, spot order, খাবার, hotel এবং day-by-day itinerary যোগ করা হবে।</span>`}
-render();updateStats();renderBDMap();
+render();updateStats();refreshMap();
 </script>
 </body>
 </html>
